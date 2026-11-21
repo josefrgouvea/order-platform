@@ -1,0 +1,19 @@
+# Configuração do Ruff compartilhada por todos os serviços do projeto.
+
+# Versão do Python para a qual o código é escrito.
+target-version = "py313"
+
+# Tamanho máximo de uma linha (o padrão do Ruff e do Black).
+line-length = 88
+
+[lint]
+select = [
+    "E",   # pycodestyle: erros de estilo da PEP 8
+    "W",   # pycodestyle: avisos de estilo da PEP 8
+    "F",   # Pyflakes: erros de lógica (import não usado, nome que não existe)
+    "I",   # isort: ordem e agrupamento dos imports
+    "B",   # flake8-bugbear: padrões que costumam causar bugs
+    "UP",  # pyupgrade: troca sintaxe antiga por sintaxe moderna do Python
+    "N",   # pep8-naming: convenções de nomes (classes, funções, variáveis)
+    "SIM", # flake8-simplify: código que pode ser escrito de forma mais simples
+]
