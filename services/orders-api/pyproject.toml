@@ -1,13 +1,16 @@
 [project]
 name = "orders-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "API da plataforma de pedidos orientada a eventos"
 readme = "README.md"
 authors = [
-    { name = "Jose Francisco Gouvea", email = "krico.gouvea@icloud.com" }
+    { name = "Jose Francisco Gouvea" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi>=0.165.0",
+    "uvicorn>=0.54.0",
+]
 
 [project.scripts]
 orders-api = "orders_api:main"
@@ -15,3 +18,8 @@ orders-api = "orders_api:main"
 [build-system]
 requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.6",
+]
