@@ -1,0 +1,17 @@
+# Ambiente virtual do Python
+.venv/
+
+# Arquivos compilados que o Python gera sozinho
+__pycache__/
+*.pyc
+
+# Variáveis de ambiente (vão ter senhas)
+.env
+
+# Caches de ferramentas
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Arquivos do macOS
+.DS_Store
