@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from orders_api.domain.exceptions import (
     EmailAlreadyRegisteredError,
     OrderNotFoundError,
+    OrderUserNotFoundError,
     UserNotFoundError,
 )
 from orders_api.domain.models import (
@@ -59,7 +60,7 @@ class OrderService:
 
     def create_order(self, data: OrderCreate) -> Order:
         if self._users.get(data.user_id) is None:
-            raise UserNotFoundError(data.user_id)
+            raise OrderUserNotFoundError(data.user_id)
 
         now = datetime.now(UTC)
         order = Order(
