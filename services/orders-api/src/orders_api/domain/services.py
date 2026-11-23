@@ -1,8 +1,21 @@
 from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import UUID, uuid4
 
-from orders_api.domain.exceptions import EmailAlreadyRegisteredError, UserNotFoundError
-from orders_api.domain.models import User, UserCreate
+from orders_api.domain.exceptions import (
+    EmailAlreadyRegisteredError,
+    OrderNotFoundError,
+    UserNotFoundError,
+)
+from orders_api.domain.models import (
+    Order,
+    OrderCreate,
+    OrderItem,
+    OrderStatus,
+    User,
+    UserCreate,
+)
+from orders_api.repositories.orders import OrderRepository
 from orders_api.repositories.users import UserRepository
 
 
@@ -30,3 +43,39 @@ class UserService:
         if user is None:
             raise UserNotFoundError(user_id)
         return user
+
+
+def calculate_total(items: list[OrderItem]) -> Decimal:
+    """Soma quantidade x preço unitário de cada item."""
+    return sum((item.unit_price * item.quantity for item in items), Decimal("0"))
+
+
+class OrderService:
+    """Regras de negócio de pedidos."""
+
+    def __init__(self, orders: OrderRepository, users: UserRepository) -> None:
+        self._orders = orders
+        self._users = users
+
+    def create_order(self, data: OrderCreate) -> Order:
+        if self._users.get(data.user_id) is None:
+            raise UserNotFoundError(data.user_id)
+
+        now = datetime.now(UTC)
+        order = Order(
+            order_id=uuid4(),
+            user_id=data.user_id,
+            items=data.items,
+            total=calculate_total(data.items),
+            status=OrderStatus.PENDING,
+            created_at=now,
+            updated_at=now,
+        )
+        self._orders.add(order)
+        return order
+
+    def get_order(self, order_id: UUID) -> Order:
+        order = self._orders.get(order_id)
+        if order is None:
+            raise OrderNotFoundError(order_id)
+        return order

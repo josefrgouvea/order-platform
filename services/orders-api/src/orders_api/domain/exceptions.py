@@ -19,3 +19,11 @@ class EmailAlreadyRegisteredError(DomainError):
     def __init__(self, email: str) -> None:
         super().__init__(f"E-mail {email} já está cadastrado.")
         self.email = email
+
+
+class OrderNotFoundError(DomainError):
+    """Erro quando um pedido não é encontrado."""
+
+    def __init__(self, order_id: UUID) -> None:
+        super().__init__(f"Pedido {order_id} não encontrado.")
+        self.order_id = order_id
