@@ -5,6 +5,12 @@ services:
       - "8000:8000"
     environment:
       ENVIRONMENT: docker
+      DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    depends_on:
+      dynamodb-init:
+        condition: service_completed_successfully
 
   dynamodb:
     image: amazon/dynamodb-local:3.3.2

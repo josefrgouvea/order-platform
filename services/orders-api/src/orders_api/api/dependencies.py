@@ -2,14 +2,16 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from orders_api.core.config import settings
+from orders_api.core.dynamodb import get_dynamodb_resource
 from orders_api.domain.services import OrderService, UserService
-from orders_api.repositories.orders import InMemoryOrderRepository, OrderRepository
-from orders_api.repositories.users import InMemoryUserRepository, UserRepository
+from orders_api.repositories.orders import DynamoOrderRepository, OrderRepository
+from orders_api.repositories.users import DynamoUserRepository, UserRepository
 
-# Uma única instância, criada quando a API sobe: todas as requisições
-# usam o mesmo "banco de dados".
-_user_repository = InMemoryUserRepository()
-_order_repository = InMemoryOrderRepository()
+# A conexão com o DynamoDB e os repositórios, criados uma vez só, quando a API sobe.
+_dynamodb = get_dynamodb_resource()
+_user_repository = DynamoUserRepository(_dynamodb.Table(settings.users_table))
+_order_repository = DynamoOrderRepository(_dynamodb.Table(settings.orders_table))
 
 
 def get_user_repository() -> UserRepository:
