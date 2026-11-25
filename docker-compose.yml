@@ -5,3 +5,25 @@ services:
       - "8000:8000"
     environment:
       ENVIRONMENT: docker
+
+  dynamodb:
+    image: amazon/dynamodb-local:3.3.2
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    working_dir: /home/dynamodblocal
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data/dynamodb:/home/dynamodblocal/data
+
+  dynamodb-init:
+    image: amazon/aws-cli:2.42.3
+    depends_on:
+      - dynamodb
+    environment:
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PAGER: ""
+    volumes:
+      - ./infra/dynamodb:/scripts:ro
+    entrypoint: ["sh", "/scripts/create-tables.sh"]
