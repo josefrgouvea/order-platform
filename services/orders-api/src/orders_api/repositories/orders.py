@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 from orders_api.domain.models import Order
@@ -25,3 +25,20 @@ class InMemoryOrderRepository:
 
     def get(self, order_id: UUID) -> Order | None:
         return self._orders.get(order_id)
+
+
+class DynamoOrderRepository:
+    """Guarda os pedidos na tabela orders do DynamoDB."""
+
+    def __init__(self, table: Any) -> None:
+        self._table = table
+
+    def add(self, order: Order) -> None:
+        self._table.put_item(Item=order.model_dump(mode="json"))
+
+    def get(self, order_id: UUID) -> Order | None:
+        response = self._table.get_item(Key={"order_id": str(order_id)})
+        item = response.get("Item")
+        if item is None:
+            return None
+        return Order.model_validate(item)
