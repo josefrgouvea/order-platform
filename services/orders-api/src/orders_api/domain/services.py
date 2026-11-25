@@ -80,3 +80,8 @@ class OrderService:
         if order is None:
             raise OrderNotFoundError(order_id)
         return order
+
+    def list_user_orders(self, user_id: UUID) -> list[Order]:
+        if self._users.get(user_id) is None:
+            raise UserNotFoundError(user_id)
+        return self._orders.list_by_user(user_id)

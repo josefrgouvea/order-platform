@@ -86,3 +86,76 @@ def test_recusa_pedido_sem_itens(client: TestClient, user: dict[str, Any]) -> No
     assert error["code"] == "validation_error"
     fields = {detail["field"] for detail in error["details"]}
     assert fields == {"body.items"}
+
+
+def test_lista_pedidos_de_usuario(client: TestClient, user: dict[str, Any]) -> None:
+    first = client.post(
+        "/v1/orders",
+        json={
+            "user_id": user["user_id"],
+            "items": [{"sku": "AAA", "quantity": 1, "unit_price": "10.00"}],
+        },
+    )
+    second = client.post(
+        "/v1/orders",
+        json={
+            "user_id": user["user_id"],
+            "items": [{"sku": "BBB", "quantity": 2, "unit_price": "15.00"}],
+        },
+    )
+
+    response = client.get(f"/v1/users/{user['user_id']}/orders")
+
+    assert response.status_code == 200
+    ids = {order["order_id"] for order in response.json()}
+    assert ids == {second.json()["order_id"], first.json()["order_id"]}
+    orders = response.json()
+    assert len(orders) == 2
+    assert orders[0]["created_at"] >= orders[1]["created_at"]
+
+
+def test_lista_apenas_os_pedidos_do_proprio_usuario(
+    client: TestClient, user: dict[str, Any]
+) -> None:
+    other_user = client.post(
+        "/v1/users", json={"name": "Other User", "email": "other.user@example.com"}
+    )
+    primeiro = client.post(
+        "/v1/orders",
+        json={
+            "user_id": other_user.json()["user_id"],
+            "items": [{"sku": "CCC", "quantity": 3, "unit_price": "20.00"}],
+        },
+    )
+    segundo = client.post(
+        "/v1/orders",
+        json={
+            "user_id": user["user_id"],
+            "items": [{"sku": "DDD", "quantity": 4, "unit_price": "25.00"}],
+        },
+    )
+
+    response = client.get(f"/v1/users/{other_user.json()['user_id']}/orders")
+    assert response.status_code == 200
+    ids = {order["order_id"] for order in response.json()}
+    assert ids == {primeiro.json()["order_id"]}
+
+    response = client.get(f"/v1/users/{user['user_id']}/orders")
+    assert response.status_code == 200
+    ids = {order["order_id"] for order in response.json()}
+    assert ids == {segundo.json()["order_id"]}
+
+
+def test_lista_vazia_para_usuarios_sem_pedidos(
+    client: TestClient, user: dict[str, Any]
+) -> None:
+    response = client.get(f"/v1/users/{user['user_id']}/orders")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_lista_de_pedidos_de_usuarios_inexistentes(client: TestClient) -> None:
+    response = client.get(f"/v1/users/{UUID(int=0)}/orders")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "user_not_found"
