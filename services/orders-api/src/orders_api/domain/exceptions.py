@@ -45,3 +45,12 @@ class OrderUserNotFoundError(DomainError):
     def __init__(self, user_id: UUID) -> None:
         super().__init__(f"Usuário {user_id} informado no pedido não foi encontrado.")
         self.user_id = user_id
+
+
+class InvalidCredentialsError(DomainError):
+    """Erro quando o e-mail ou a senha do login estão errados."""
+
+    code = "invalid_credentials"
+
+    def __init__(self) -> None:
+        super().__init__("E-mail ou senha incorretos.")

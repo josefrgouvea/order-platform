@@ -4,7 +4,7 @@ from fastapi import Depends
 
 from orders_api.core.config import settings
 from orders_api.core.dynamodb import get_dynamodb_resource
-from orders_api.domain.services import OrderService, UserService
+from orders_api.domain.services import AuthService, OrderService, UserService
 from orders_api.repositories.orders import DynamoOrderRepository, OrderRepository
 from orders_api.repositories.users import DynamoUserRepository, UserRepository
 
@@ -36,6 +36,15 @@ def get_order_service(
     users: Annotated[UserRepository, Depends(get_user_repository)],
 ) -> OrderService:
     return OrderService(orders, users)
+
+
+def get_auth_service(
+    users: Annotated[UserRepository, Depends(get_user_repository)],
+) -> AuthService:
+    return AuthService(users)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
 OrderServiceDep = Annotated[OrderService, Depends(get_order_service)]

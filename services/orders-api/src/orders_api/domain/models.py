@@ -63,3 +63,13 @@ class Order(BaseModel):
     status: OrderStatus
     created_at: datetime
     updated_at: datetime
+
+
+# ---------- Autenticação ----------
+
+
+class TokenResponse(BaseModel):
+    """A resposta do login."""
+
+    access_token: str
+    token_type: str = "bearer"

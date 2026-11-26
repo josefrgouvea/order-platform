@@ -2,9 +2,10 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from orders_api.core.security import hash_password
+from orders_api.core.security import create_access_token, hash_password, verify_password
 from orders_api.domain.exceptions import (
     EmailAlreadyRegisteredError,
+    InvalidCredentialsError,
     OrderNotFoundError,
     OrderUserNotFoundError,
     UserNotFoundError,
@@ -87,3 +88,16 @@ class OrderService:
         if self._users.get(user_id) is None:
             raise UserNotFoundError(user_id)
         return self._orders.list_by_user(user_id)
+
+
+class AuthService:
+    """Regras de autenticação."""
+
+    def __init__(self, users: UserRepository) -> None:
+        self._users = users
+
+    def login(self, email: str, password: str) -> str:
+        user = self._users.get_by_email(email)
+        if user is None or not verify_password(password, user.password_hash):
+            raise InvalidCredentialsError()
+        return create_access_token(user.user_id)
