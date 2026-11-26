@@ -118,7 +118,12 @@ def test_lista_apenas_os_pedidos_do_proprio_usuario(
     client: TestClient, user: dict[str, Any]
 ) -> None:
     other_user = client.post(
-        "/v1/users", json={"name": "Other User", "email": "other.user@example.com"}
+        "/v1/users",
+        json={
+            "name": "Other User",
+            "email": "other.user@example.com",
+            "password": "senha-do-other-user",
+        },
     )
     primeiro = client.post(
         "/v1/orders",

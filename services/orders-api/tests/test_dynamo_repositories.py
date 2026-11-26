@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import boto3
 import pytest
 from moto import mock_aws
-from orders_api.domain.models import Order, OrderItem, OrderStatus, User
+from orders_api.domain.models import Order, OrderItem, OrderStatus, UserInDB
 from orders_api.repositories.orders import DynamoOrderRepository
 from orders_api.repositories.users import DynamoUserRepository
 
@@ -70,8 +70,14 @@ def order_repository(dynamodb: Any) -> DynamoOrderRepository:
     return DynamoOrderRepository(dynamodb.Table("orders"))
 
 
-def make_user(email: str = "ana@exemplo.com") -> User:
-    return User(user_id=uuid4(), name="Ana", email=email, created_at=datetime.now(UTC))
+def make_user(email: str = "ana@exemplo.com") -> UserInDB:
+    return UserInDB(
+        user_id=uuid4(),
+        name="Ana",
+        email=email,
+        created_at=datetime.now(UTC),
+        password_hash="hash-falso",
+    )
 
 
 def make_order(user_id: UUID, created_at: datetime | None = None) -> Order:

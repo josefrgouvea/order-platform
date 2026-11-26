@@ -1,7 +1,9 @@
 from decimal import Decimal
 
-from orders_api.domain.models import OrderItem
-from orders_api.domain.services import calculate_total
+from orders_api.core.security import verify_password
+from orders_api.domain.models import OrderItem, UserCreate
+from orders_api.domain.services import UserService, calculate_total
+from orders_api.repositories.users import InMemoryUserRepository
 
 
 def test_calcula_total_soma() -> None:
@@ -26,3 +28,18 @@ def test_calcula_total_sem_erro_de_float() -> None:
 
 def test_calcula_total_de_lista_vazia() -> None:
     assert calculate_total([]) == Decimal("0")
+
+
+def test_guarda_apenas_o_hash_da_senha() -> None:
+    repository = InMemoryUserRepository()
+    service = UserService(repository)
+    senha = "senha-do-jose"
+
+    created = service.create_user(
+        UserCreate(name="Jose", email="jose@exemplo.com", password=senha)
+    )
+
+    stored = repository.get(created.user_id)
+    assert stored is not None
+    assert stored.password_hash != senha
+    assert verify_password(senha, stored.password_hash)

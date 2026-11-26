@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
+from orders_api.core.security import hash_password
 from orders_api.domain.exceptions import (
     EmailAlreadyRegisteredError,
     OrderNotFoundError,
@@ -13,8 +14,8 @@ from orders_api.domain.models import (
     OrderCreate,
     OrderItem,
     OrderStatus,
-    User,
     UserCreate,
+    UserInDB,
 )
 from orders_api.repositories.orders import OrderRepository
 from orders_api.repositories.users import UserRepository
@@ -26,20 +27,21 @@ class UserService:
     def __init__(self, repository: UserRepository) -> None:
         self._repository = repository
 
-    def create_user(self, data: UserCreate) -> User:
+    def create_user(self, data: UserCreate) -> UserInDB:
         if self._repository.get_by_email(data.email) is not None:
             raise EmailAlreadyRegisteredError(data.email)
 
-        user = User(
+        user = UserInDB(
             user_id=uuid4(),
             name=data.name,
             email=data.email,
             created_at=datetime.now(UTC),
+            password_hash=hash_password(data.password),
         )
         self._repository.add(user)
         return user
 
-    def get_user(self, user_id: UUID) -> User:
+    def get_user(self, user_id: UUID) -> UserInDB:
         user = self._repository.get(user_id)
         if user is None:
             raise UserNotFoundError(user_id)

@@ -6,15 +6,16 @@ from pydantic import ValidationError
 
 
 def test_aceita_usuario_valido() -> None:
-    user = UserCreate(name="Jose", email="Jose@exemplo.com")
+    user = UserCreate(name="Jose", email="Jose@exemplo.com", password="senha-do-jose")
 
     assert user.name == "Jose"
     assert user.email == "Jose@exemplo.com"
+    assert user.password == "senha-do-jose"
 
 
 def test_recusa_email_invalido() -> None:
     with pytest.raises(ValidationError):
-        UserCreate(name="Jose", email="sem-arroba")
+        UserCreate(name="Jose", email="sem-arroba", password="senha-do-jose")
 
 
 @pytest.mark.parametrize(
@@ -50,4 +51,4 @@ def test_ignora_total_enviado() -> None:
 
 def test_recusa_nome_vazio() -> None:
     with pytest.raises(ValidationError):
-        UserCreate(name="", email="jose@exemplo.com")
+        UserCreate(name="", email="jose@exemplo.com", password="senha-do-jose")

@@ -13,6 +13,7 @@ class UserCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
 
 
 class User(BaseModel):
@@ -22,6 +23,12 @@ class User(BaseModel):
     name: str
     email: EmailStr
     created_at: datetime
+
+
+class UserInDB(User):
+    """Um usuário como fica guardado no banco, com o hash da senha."""
+
+    password_hash: str
 
 
 # ---------- Pedidos ----------

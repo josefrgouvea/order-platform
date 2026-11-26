@@ -27,7 +27,8 @@ def client() -> Iterator[TestClient]:
 def user(client: TestClient) -> dict[str, Any]:
     """Um usuário já cadastrado, para os testes que precisam de um."""
     response = client.post(
-        "/v1/users", json={"name": "Jose", "email": "jose@exemplo.com"}
+        "/v1/users",
+        json={"name": "Jose", "email": "jose@exemplo.com", "password": "senha-do-jose"},
     )
     return response.json()
 
