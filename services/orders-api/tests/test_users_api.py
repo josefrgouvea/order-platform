@@ -17,8 +17,10 @@ def test_cria_usuario(client: TestClient) -> None:
     assert "user_id" in body
 
 
-def test_consulta_usuario(client: TestClient, user: dict[str, Any]) -> None:
-    response = client.get(f"/v1/users/{user['user_id']}")
+def test_consulta_usuario(
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
+    response = client.get(f"/v1/users/{user['user_id']}", headers=auth_headers)
 
     assert response.status_code == 200
     assert response.json() == user
@@ -34,8 +36,8 @@ def test_recusa_email_repetido(client: TestClient, user: dict[str, Any]) -> None
     assert response.json()["error"]["code"] == "email_already_registered"
 
 
-def test_usuario_inexistente(client: TestClient) -> None:
-    response = client.get(f"/v1/users/{uuid4()}")
+def test_usuario_inexistente(client: TestClient, auth_headers: dict[str, str]) -> None:
+    response = client.get(f"/v1/users/{uuid4()}", headers=auth_headers)
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "user_not_found"
@@ -83,14 +85,14 @@ def test_recusa_senha_curta(client: TestClient) -> None:
 
 
 def test_senha_nunca_aparece_na_resposta(
-    client: TestClient, user: dict[str, Any]
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
 ) -> None:
     # A resposta do cadastro (a fixture user é ela)
     assert "password" not in user
     assert "password_hash" not in user
 
     # A resposta da consulta
-    response = client.get(f"/v1/users/{user['user_id']}")
+    response = client.get(f"/v1/users/{user['user_id']}", headers=auth_headers)
     assert response.status_code == 200
     assert "password" not in response.json()
     assert "password_hash" not in response.json()

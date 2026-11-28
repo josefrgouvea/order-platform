@@ -54,3 +54,21 @@ class InvalidCredentialsError(DomainError):
 
     def __init__(self) -> None:
         super().__init__("E-mail ou senha incorretos.")
+
+
+class NotAuthenticatedError(DomainError):
+    """Erro quando a requisição não traz um token."""
+
+    code = "not_authenticated"
+
+    def __init__(self) -> None:
+        super().__init__("É preciso estar autenticado para acessar este recurso.")
+
+
+class InvalidAccessTokenError(DomainError):
+    """Erro quando o token é inválido ou está expirado."""
+
+    code = "invalid_token"
+
+    def __init__(self) -> None:
+        super().__init__("Token inválido ou expirado.")

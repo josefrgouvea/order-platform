@@ -1,9 +1,13 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
 
 from orders_api.core.config import settings
 from orders_api.core.dynamodb import get_dynamodb_resource
+from orders_api.core.security import decode_access_token
+from orders_api.domain.exceptions import NotAuthenticatedError
 from orders_api.domain.services import AuthService, OrderService, UserService
 from orders_api.repositories.orders import DynamoOrderRepository, OrderRepository
 from orders_api.repositories.users import DynamoUserRepository, UserRepository
@@ -48,3 +52,18 @@ AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
 OrderServiceDep = Annotated[OrderService, Depends(get_order_service)]
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login", auto_error=False)
+
+
+def get_current_user_id(
+    token: Annotated[str | None, Depends(oauth2_scheme)],
+) -> UUID:
+    """Identifica o usuário da requisição, pelo token."""
+    if token is None:
+        raise NotAuthenticatedError()
+    return decode_access_token(token)
+
+
+CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]

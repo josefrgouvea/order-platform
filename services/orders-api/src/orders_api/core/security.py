@@ -5,6 +5,7 @@ import jwt
 from pwdlib import PasswordHash
 
 from orders_api.core.config import settings
+from orders_api.domain.exceptions import InvalidAccessTokenError
 
 _password_hash = PasswordHash.recommended()
 
@@ -32,3 +33,16 @@ def create_access_token(user_id: UUID) -> str:
         settings.jwt_secret_key.get_secret_value(),
         algorithm=settings.jwt_algorithm,
     )
+
+
+def decode_access_token(token: str) -> UUID:
+    """Confere a assinatura e a expiração do token e devolve o ID do usuário."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key.get_secret_value(),
+            algorithms=[settings.jwt_algorithm],
+        )
+        return UUID(payload["sub"])
+    except (jwt.InvalidTokenError, KeyError, ValueError) as error:
+        raise InvalidAccessTokenError() from error

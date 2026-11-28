@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 
 def test_cria_pedido_para_usuario_existente(
-    client: TestClient, user: dict[str, Any]
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
 ) -> None:
     response = client.post(
         "/v1/orders",
@@ -16,6 +16,7 @@ def test_cria_pedido_para_usuario_existente(
                 {"sku": "BBB", "quantity": 1, "unit_price": "15.00"},
             ],
         },
+        headers=auth_headers,
     )
 
     assert response.status_code == 201
@@ -26,27 +27,34 @@ def test_cria_pedido_para_usuario_existente(
     assert body["created_at"] == body["updated_at"]
 
 
-def test_consulta_pedido_existente(client: TestClient, order: dict[str, Any]) -> None:
-    response = client.get(f"/v1/orders/{order['order_id']}")
+def test_consulta_pedido_existente(
+    client: TestClient, order: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
+    response = client.get(f"/v1/orders/{order['order_id']}", headers=auth_headers)
 
     assert response.status_code == 200
     assert response.json() == order
 
 
-def test_recusa_pedido_inexistente(client: TestClient) -> None:
-    response = client.get(f"/v1/orders/{UUID(int=0)}")
+def test_recusa_pedido_inexistente(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get(f"/v1/orders/{UUID(int=0)}", headers=auth_headers)
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "order_not_found"
 
 
-def test_recusa_pedido_para_usuario_inexistente(client: TestClient) -> None:
+def test_recusa_pedido_para_usuario_inexistente(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
     response = client.post(
         "/v1/orders",
         json={
             "user_id": str(UUID(int=0)),
             "items": [{"sku": "AAA", "quantity": 2, "unit_price": "10.00"}],
         },
+        headers=auth_headers,
     )
 
     assert response.status_code == 422
@@ -54,7 +62,7 @@ def test_recusa_pedido_para_usuario_inexistente(client: TestClient) -> None:
 
 
 def test_recusa_pedido_com_dados_invalidos(
-    client: TestClient, user: dict[str, Any]
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
 ) -> None:
     response = client.post(
         "/v1/orders",
@@ -62,6 +70,7 @@ def test_recusa_pedido_com_dados_invalidos(
             "user_id": user["user_id"],
             "items": [{"sku": "", "quantity": 0, "unit_price": "0.00"}],
         },
+        headers=auth_headers,
     )
 
     assert response.status_code == 422
@@ -75,10 +84,13 @@ def test_recusa_pedido_com_dados_invalidos(
     }
 
 
-def test_recusa_pedido_sem_itens(client: TestClient, user: dict[str, Any]) -> None:
+def test_recusa_pedido_sem_itens(
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
     response = client.post(
         "/v1/orders",
         json={"user_id": user["user_id"], "items": []},
+        headers=auth_headers,
     )
 
     assert response.status_code == 422
@@ -88,13 +100,28 @@ def test_recusa_pedido_sem_itens(client: TestClient, user: dict[str, Any]) -> No
     assert fields == {"body.items"}
 
 
-def test_lista_pedidos_de_usuario(client: TestClient, user: dict[str, Any]) -> None:
+def test_recusa_id_de_pedido_invalido(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get("/v1/orders/invalid-uuid", headers=auth_headers)
+
+    assert response.status_code == 422
+    error = response.json()["error"]
+    assert error["code"] == "validation_error"
+    fields = {detail["field"] for detail in error["details"]}
+    assert fields == {"path.order_id"}
+
+
+def test_lista_pedidos_de_usuario(
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
     first = client.post(
         "/v1/orders",
         json={
             "user_id": user["user_id"],
             "items": [{"sku": "AAA", "quantity": 1, "unit_price": "10.00"}],
         },
+        headers=auth_headers,
     )
     second = client.post(
         "/v1/orders",
@@ -102,27 +129,25 @@ def test_lista_pedidos_de_usuario(client: TestClient, user: dict[str, Any]) -> N
             "user_id": user["user_id"],
             "items": [{"sku": "BBB", "quantity": 2, "unit_price": "15.00"}],
         },
+        headers=auth_headers,
     )
 
-    response = client.get(f"/v1/users/{user['user_id']}/orders")
+    response = client.get(f"/v1/users/{user['user_id']}/orders", headers=auth_headers)
 
     assert response.status_code == 200
-    ids = {order["order_id"] for order in response.json()}
-    assert ids == {second.json()["order_id"], first.json()["order_id"]}
-    orders = response.json()
-    assert len(orders) == 2
-    assert orders[0]["created_at"] >= orders[1]["created_at"]
+    ids = [order["order_id"] for order in response.json()]
+    assert ids == [second.json()["order_id"], first.json()["order_id"]]
 
 
 def test_lista_apenas_os_pedidos_do_proprio_usuario(
-    client: TestClient, user: dict[str, Any]
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
 ) -> None:
     other_user = client.post(
         "/v1/users",
         json={
             "name": "Other User",
             "email": "other.user@example.com",
-            "password": "senha-do-other-user",
+            "password": "senha-do-outro",
         },
     )
     primeiro = client.post(
@@ -131,6 +156,7 @@ def test_lista_apenas_os_pedidos_do_proprio_usuario(
             "user_id": other_user.json()["user_id"],
             "items": [{"sku": "CCC", "quantity": 3, "unit_price": "20.00"}],
         },
+        headers=auth_headers,
     )
     segundo = client.post(
         "/v1/orders",
@@ -138,29 +164,35 @@ def test_lista_apenas_os_pedidos_do_proprio_usuario(
             "user_id": user["user_id"],
             "items": [{"sku": "DDD", "quantity": 4, "unit_price": "25.00"}],
         },
+        headers=auth_headers,
     )
 
-    response = client.get(f"/v1/users/{other_user.json()['user_id']}/orders")
+    response = client.get(
+        f"/v1/users/{other_user.json()['user_id']}/orders", headers=auth_headers
+    )
     assert response.status_code == 200
     ids = {order["order_id"] for order in response.json()}
     assert ids == {primeiro.json()["order_id"]}
 
-    response = client.get(f"/v1/users/{user['user_id']}/orders")
+    response = client.get(f"/v1/users/{user['user_id']}/orders", headers=auth_headers)
     assert response.status_code == 200
     ids = {order["order_id"] for order in response.json()}
     assert ids == {segundo.json()["order_id"]}
 
 
-def test_lista_vazia_para_usuarios_sem_pedidos(
-    client: TestClient, user: dict[str, Any]
+def test_lista_vazia_para_usuario_sem_pedidos(
+    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
 ) -> None:
-    response = client.get(f"/v1/users/{user['user_id']}/orders")
+    response = client.get(f"/v1/users/{user['user_id']}/orders", headers=auth_headers)
+
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_lista_de_pedidos_de_usuarios_inexistentes(client: TestClient) -> None:
-    response = client.get(f"/v1/users/{UUID(int=0)}/orders")
+def test_lista_de_pedidos_de_usuario_inexistente(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get(f"/v1/users/{UUID(int=0)}/orders", headers=auth_headers)
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "user_not_found"
