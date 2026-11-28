@@ -1,15 +1,21 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
 
-from orders_api.domain.services import OrderService, UserService
-from orders_api.repositories.orders import InMemoryOrderRepository, OrderRepository
-from orders_api.repositories.users import InMemoryUserRepository, UserRepository
+from orders_api.core.config import settings
+from orders_api.core.dynamodb import get_dynamodb_resource
+from orders_api.core.security import decode_access_token
+from orders_api.domain.exceptions import NotAuthenticatedError
+from orders_api.domain.services import AuthService, OrderService, UserService
+from orders_api.repositories.orders import DynamoOrderRepository, OrderRepository
+from orders_api.repositories.users import DynamoUserRepository, UserRepository
 
-# Uma única instância, criada quando a API sobe: todas as requisições
-# usam o mesmo "banco de dados".
-_user_repository = InMemoryUserRepository()
-_order_repository = InMemoryOrderRepository()
+# A conexão com o DynamoDB e os repositórios, criados uma vez só, quando a API sobe.
+_dynamodb = get_dynamodb_resource()
+_user_repository = DynamoUserRepository(_dynamodb.Table(settings.users_table))
+_order_repository = DynamoOrderRepository(_dynamodb.Table(settings.orders_table))
 
 
 def get_user_repository() -> UserRepository:
@@ -36,4 +42,28 @@ def get_order_service(
     return OrderService(orders, users)
 
 
+def get_auth_service(
+    users: Annotated[UserRepository, Depends(get_user_repository)],
+) -> AuthService:
+    return AuthService(users)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
 OrderServiceDep = Annotated[OrderService, Depends(get_order_service)]
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login", auto_error=False)
+
+
+def get_current_user_id(
+    token: Annotated[str | None, Depends(oauth2_scheme)],
+) -> UUID:
+    """Identifica o usuário da requisição, pelo token."""
+    if token is None:
+        raise NotAuthenticatedError()
+    return decode_access_token(token)
+
+
+CurrentUserId = Annotated[UUID, Depends(get_current_user_id)]

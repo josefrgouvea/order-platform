@@ -13,6 +13,7 @@ class UserCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
 
 
 class User(BaseModel):
@@ -22,6 +23,12 @@ class User(BaseModel):
     name: str
     email: EmailStr
     created_at: datetime
+
+
+class UserInDB(User):
+    """Um usuário como fica guardado no banco, com o hash da senha."""
+
+    password_hash: str
 
 
 # ---------- Pedidos ----------
@@ -42,7 +49,6 @@ class OrderItem(BaseModel):
 class OrderCreate(BaseModel):
     """Dados que o cliente envia para criar um pedido."""
 
-    user_id: UUID
     items: list[OrderItem] = Field(min_length=1)
 
 
@@ -56,3 +62,13 @@ class Order(BaseModel):
     status: OrderStatus
     created_at: datetime
     updated_at: datetime
+
+
+# ---------- Autenticação ----------
+
+
+class TokenResponse(BaseModel):
+    """A resposta do login."""
+
+    access_token: str
+    token_type: str = "bearer"

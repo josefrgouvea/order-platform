@@ -1,0 +1,36 @@
+services:
+  orders-api:
+    build: ./services/orders-api
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: docker
+      DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?defina JWT_SECRET_KEY no .env da raiz}
+    depends_on:
+      dynamodb-init:
+        condition: service_completed_successfully
+
+  dynamodb:
+    image: amazon/dynamodb-local:3.3.2
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    working_dir: /home/dynamodblocal
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data/dynamodb:/home/dynamodblocal/data
+
+  dynamodb-init:
+    image: amazon/aws-cli:2.42.3
+    depends_on:
+      - dynamodb
+    environment:
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PAGER: ""
+    volumes:
+      - ./infra/dynamodb:/scripts:ro
+    entrypoint: ["sh", "/scripts/create-tables.sh"]

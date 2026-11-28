@@ -8,9 +8,13 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "boto3>=1.44.11",
     "fastapi>=0.165.0",
+    "pwdlib[argon2]>=0.4.2",
     "pydantic-settings>=2.16.3",
     "pydantic[email]>=2.14.4",
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.34",
     "uvicorn>=0.54.0",
 ]
 
@@ -22,6 +26,7 @@ build-backend = "uv_build"
 dev = [
     "httpx>=0.28.1",
     "httpx2>=2.16.2",
+    "moto[dynamodb]>=5.2.6",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.6",
