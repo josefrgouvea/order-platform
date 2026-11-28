@@ -1,7 +1,8 @@
 from typing import Any
-from uuid import uuid4
+from uuid import UUID
 
 from fastapi.testclient import TestClient
+from orders_api.core.security import create_access_token
 
 
 def test_cria_usuario(client: TestClient) -> None:
@@ -36,8 +37,20 @@ def test_recusa_email_repetido(client: TestClient, user: dict[str, Any]) -> None
     assert response.json()["error"]["code"] == "email_already_registered"
 
 
-def test_usuario_inexistente(client: TestClient, auth_headers: dict[str, str]) -> None:
-    response = client.get(f"/v1/users/{uuid4()}", headers=auth_headers)
+def test_recusa_consulta_de_outro_usuario(
+    client: TestClient, other_user: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
+    response = client.get(f"/v1/users/{other_user['user_id']}", headers=auth_headers)
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "forbidden"
+
+
+def test_consulta_de_usuario_do_token_inexistente(client: TestClient) -> None:
+    user_id = UUID(int=0)
+    headers = {"Authorization": f"Bearer {create_access_token(user_id)}"}
+
+    response = client.get(f"/v1/users/{user_id}", headers=headers)
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "user_not_found"

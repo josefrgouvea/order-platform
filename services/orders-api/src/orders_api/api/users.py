@@ -18,13 +18,13 @@ def create_user(data: UserCreate, service: UserServiceDep) -> User:
 def get_user(
     user_id: UUID, service: UserServiceDep, current_user_id: CurrentUserId
 ) -> User:
-    """Consulta um usuário pelo ID."""
-    return service.get_user(user_id)
+    """Consulta os dados do próprio usuário."""
+    return service.get_user(user_id, requester_id=current_user_id)
 
 
 @router.get("/{user_id}/orders")
 def list_user_orders(
     user_id: UUID, service: OrderServiceDep, current_user_id: CurrentUserId
 ) -> list[Order]:
-    """Lista os pedidos de um usuário."""
-    return service.list_user_orders(user_id)
+    """Lista os pedidos do próprio usuário, mais recentes primeiro."""
+    return service.list_user_orders(user_id, requester_id=current_user_id)

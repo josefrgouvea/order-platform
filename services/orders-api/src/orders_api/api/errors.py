@@ -6,11 +6,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from orders_api.domain.exceptions import (
     DomainError,
     EmailAlreadyRegisteredError,
+    ForbiddenError,
     InvalidAccessTokenError,
     InvalidCredentialsError,
     NotAuthenticatedError,
     OrderNotFoundError,
-    OrderUserNotFoundError,
     UserNotFoundError,
 )
 
@@ -19,7 +19,7 @@ STATUS_BY_ERROR: dict[type[DomainError], int] = {
     UserNotFoundError: status.HTTP_404_NOT_FOUND,
     OrderNotFoundError: status.HTTP_404_NOT_FOUND,
     EmailAlreadyRegisteredError: status.HTTP_409_CONFLICT,
-    OrderUserNotFoundError: status.HTTP_422_UNPROCESSABLE_CONTENT,
+    ForbiddenError: status.HTTP_403_FORBIDDEN,
     InvalidCredentialsError: status.HTTP_401_UNAUTHORIZED,
     NotAuthenticatedError: status.HTTP_401_UNAUTHORIZED,
     InvalidAccessTokenError: status.HTTP_401_UNAUTHORIZED,

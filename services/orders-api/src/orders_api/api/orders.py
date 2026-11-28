@@ -12,13 +12,13 @@ router = APIRouter(prefix="/v1/orders", tags=["orders"])
 def create_order(
     data: OrderCreate, service: OrderServiceDep, current_user_id: CurrentUserId
 ) -> Order:
-    """Cria um pedido para um usuário existente."""
-    return service.create_order(data)
+    """Cria um pedido para o usuário do token."""
+    return service.create_order(data, user_id=current_user_id)
 
 
 @router.get("/{order_id}")
 def get_order(
     order_id: UUID, service: OrderServiceDep, current_user_id: CurrentUserId
 ) -> Order:
-    """Consulta um pedido pelo ID."""
-    return service.get_order(order_id)
+    """Consulta um pedido do próprio usuário."""
+    return service.get_order(order_id, requester_id=current_user_id)

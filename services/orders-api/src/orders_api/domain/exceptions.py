@@ -37,14 +37,13 @@ class OrderNotFoundError(DomainError):
         self.order_id = order_id
 
 
-class OrderUserNotFoundError(DomainError):
-    """Erro quando um pedido é criado para um usuário que não existe."""
+class ForbiddenError(DomainError):
+    """Erro quando o usuário tenta acessar dados de outra pessoa."""
 
-    code = "order_user_not_found"
+    code = "forbidden"
 
-    def __init__(self, user_id: UUID) -> None:
-        super().__init__(f"Usuário {user_id} informado no pedido não foi encontrado.")
-        self.user_id = user_id
+    def __init__(self) -> None:
+        super().__init__("Você não tem permissão para acessar este recurso.")
 
 
 class InvalidCredentialsError(DomainError):

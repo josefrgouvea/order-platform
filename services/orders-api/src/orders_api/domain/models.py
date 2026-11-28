@@ -49,7 +49,6 @@ class OrderItem(BaseModel):
 class OrderCreate(BaseModel):
     """Dados que o cliente envia para criar um pedido."""
 
-    user_id: UUID
     items: list[OrderItem] = Field(min_length=1)
 
 

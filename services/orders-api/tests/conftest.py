@@ -36,14 +36,11 @@ def user(client: TestClient) -> dict[str, Any]:
 
 
 @pytest.fixture
-def order(
-    client: TestClient, user: dict[str, Any], auth_headers: dict[str, str]
-) -> dict[str, Any]:
-    """Um pedido já cadastrado, para os testes que precisam de um."""
+def order(client: TestClient, auth_headers: dict[str, str]) -> dict[str, Any]:
+    """Um pedido da Ana, já cadastrado."""
     response = client.post(
         "/v1/orders",
         json={
-            "user_id": user["user_id"],
             "items": [
                 {"sku": "AAA", "quantity": 2, "unit_price": "10.00"},
                 {"sku": "BBB", "quantity": 1, "unit_price": "15.00"},
@@ -54,8 +51,31 @@ def order(
     assert response.status_code == 201
     return response.json()
 
+
 @pytest.fixture
 def auth_headers(user: dict[str, Any]) -> dict[str, str]:
     """O cabeçalho de autenticação com um token válido da Ana."""
     token = create_access_token(UUID(user["user_id"]))
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def other_user(client: TestClient) -> dict[str, Any]:
+    """Um segundo usuário, o Bruno, para os testes de autorização."""
+    response = client.post(
+        "/v1/users",
+        json={
+            "name": "Bruno",
+            "email": "bruno@exemplo.com",
+            "password": "senha-do-bruno",
+        },
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
+@pytest.fixture
+def other_auth_headers(other_user: dict[str, Any]) -> dict[str, str]:
+    """O cabeçalho de autenticação com um token válido do Bruno."""
+    token = create_access_token(UUID(other_user["user_id"]))
     return {"Authorization": f"Bearer {token}"}
